@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from . import config
 import ee
 
@@ -22,5 +22,6 @@ def getSrtmMap(request):
     return HttpResponse(mapid.__str__())
 
 def getSomething(request):
-    from .atmos.helpers import GetCorrectedImage
-    return HttpResponse("defined")
+    from .atmos.helpers.GetCorrectedImage import getCorrectedImage
+    trestResponse = {"Asdasd":"asdasd"}
+    return JsonResponse(getCorrectedImage(config.EE_CREDENTIALS,trestResponse))
