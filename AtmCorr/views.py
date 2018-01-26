@@ -27,12 +27,13 @@ def getSomething(request):
     return JsonResponse(getCorrectedImage(config.EE_CREDENTIALS,trestResponse))
 
 def getImageList(request):
-    from .atmos.helpers.GetImages import getImageCount
+    from .atmos.helpers.GetImages import getImageIds
     date = request.GET.get('date')
     north = request.GET.get('north')
     west = request.GET.get('west')
     south = request.GET.get('south')
     east = request.GET.get('east')
+    maxZenith = request.GET.get('maxZenith')
 
     '''
     mission = 'COPERNICUS/S2'
@@ -44,4 +45,4 @@ def getImageList(request):
         'MEAN_SOLAR_ZENITH_ANGLE' : 75
     }
     return HttpResponse(getImageDates(config.EE_CREDENTIALS, filters))'''
-    return HttpResponse(getImageCount(config.EE_CREDENTIALS, date, west, south, east, north))
+    return JsonResponse(getImageIds(config.EE_CREDENTIALS, date, west, south, east, north, maxZenith))

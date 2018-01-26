@@ -22,7 +22,7 @@ app.createFunctions = function(){
         onAdd: function (map) {
             // Create a container with classname and return it
             var template = document.createElement('template');
-            var html = "<input type=text id=datepicker readonly=true placeholder=Date style='width:90px;padding:2px;text-align:center;border-radius:4px;border:2px solid #ccc;' />";
+            var html = "<input type=text id=datepicker readonly=true placeholder=Date style='width:90px;padding:2px;text-align:center;box-shadow:0px 1px 5px rgba(0, 0, 0, 0.4);border-radius:4px;border:1px solid #ccc;' />";
             template.innerHTML = html.trim();
             return template.content.firstChild;
         },
@@ -32,9 +32,22 @@ app.createFunctions = function(){
         }
     });
 
-    var datePicker =  new DatePicker().addTo(app.map);
+    app.datePicker =  new DatePicker().addTo(app.map);
 
     $("#datepicker").datepicker();
+  }
+  app.addSolarZenithPicker = function(){
+    app.solarZenithSlider = L.control.slider(function(value) {
+    			//initiae data fetch
+			}, {
+    		max: 90,
+    		value: 75,
+    		step:5,
+    		size: '250px',
+    		orientation:'vertical',
+    		id: 'solar-zenith-slider'
+		}).addTo(app.map);
+
   }
 }
 
@@ -44,7 +57,7 @@ app.initialize = function(){
   L.tileLayer('https://api.mapbox.com/styles/v1/banmedo/ciiibvf1k0011alki4gp6if1s/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYmFubWVkbyIsImEiOiJhSklqeEZzIn0.rzfSxO3cVUhghA2sJN378A').addTo(app.map);
 
   app.addDatePicker();
-
+  app.addSolarZenithPicker();
 }
 
 app.addHandlers = function(){
@@ -56,7 +69,8 @@ app.addHandlers = function(){
       west: bounds.getWest(),
       south: bounds.getSouth(),
       east: bounds.getEast(),
-      north: bounds.getNorth()
+      north: bounds.getNorth(),
+      maxZenith: app.solarZenithSlider.slider.value
     }
     app.setLoading(true);
     $.ajax({
@@ -64,6 +78,8 @@ app.addHandlers = function(){
         data:params,
         success:function(response){
           console.log(response);
+          app.origList = response.idList;
+          
           app.setLoading(false);
         }
     });
