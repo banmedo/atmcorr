@@ -41,7 +41,7 @@ def getCorrectedImage (credentials,mapID):
     # atmospherically correct image collection
 
     ic_atmospherically_corrected = []
-
+    '''
     for feature in features:
 
         # at-sensor radiance
@@ -65,5 +65,6 @@ def getCorrectedImage (credentials,mapID):
     temp = {
         "mapId" : afterMapId['mapid'],
         "token" : afterMapId['token']
-    }
+    }'''
+    temp = {"Asdasd":"qweqwe"}
     return temp
