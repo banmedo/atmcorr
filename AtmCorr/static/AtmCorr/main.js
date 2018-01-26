@@ -49,6 +49,12 @@ app.createFunctions = function(){
 		}).addTo(app.map);
 
   }
+  app.addLayerToMap = function(id){
+    app.setLoading(true);
+    /*$.ajax({
+
+    });*/
+  }
 }
 
 app.initialize = function(){
@@ -79,7 +85,7 @@ app.addHandlers = function(){
         success:function(response){
           console.log(response);
           app.origList = response.idList;
-          
+
           app.setLoading(false);
         }
     });
