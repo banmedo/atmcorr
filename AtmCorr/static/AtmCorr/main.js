@@ -13,26 +13,32 @@ app.createFunctions = function(){
   app.setLoading = function(state){
     console.log("loading", state);
   }
+  app.addLeafletCorners = function(){
+    var corners = app.map._controlCorners,
+        l = 'leaflet-',
+        container = app.map._controlContainer;
+
+    function createCorner(vSide, hSide) {
+        var className = l + vSide + ' ' + l + hSide;
+
+        corners[vSide + hSide] = L.DomUtil.create('div', className, container);
+    }
+    //createCorner('verticalcenter', 'left');
+    //createCorner('verticalcenter', 'right');
+    //createCorner('horizontalcenter','top');
+    createCorner('horizontalcenter','bottom');
+  }
   app.addDatePicker = function(){
     var DatePicker = L.Control.extend({
-        options: {
-            // Default control position
-            position: 'topright'
-        },
         onAdd: function (map) {
-            // Create a container with classname and return it
             var template = document.createElement('template');
-            var html = "<input type=text id=datepicker readonly=true placeholder=Date style='width:90px;padding:2px;text-align:center;box-shadow:0px 1px 5px rgba(0, 0, 0, 0.4);border-radius:4px;border:1px solid #ccc;' />";
+            var html = "<input type=text id=datepicker readonly=true placeholder=Date  />";
             template.innerHTML = html.trim();
             return template.content.firstChild;
-        },
-        setContent: function (content) {
-            // Set the innerHTML of the container
-            this.getContainer().innerHTML = content;
         }
     });
 
-    app.datePicker =  new DatePicker().addTo(app.map);
+    app.datePicker =  new DatePicker({position:'topright'}).addTo(app.map);
 
     $("#datepicker").datepicker();
   }
@@ -49,6 +55,20 @@ app.createFunctions = function(){
 		}).addTo(app.map);
 
   }
+
+  app.addImageScroller = function(){
+    var ImageScroller = L.Control.extend({
+      onAdd: function(map){
+        var template = document.createElement('template');
+        var html = "<div class=leaflet-imagescroller>Select a date!</div>";
+        template.innerHTML = html.trim();
+        return template.content.firstChild;
+      }
+    });
+
+    app.ImageScroller =  new ImageScroller({position:'horizontalcenterbottom'}).addTo(app.map);
+  }
+
   app.addLayerToMap = function(id){
     app.setLoading(true);
     /*$.ajax({
@@ -62,6 +82,8 @@ app.initialize = function(){
 
   L.tileLayer('https://api.mapbox.com/styles/v1/banmedo/ciiibvf1k0011alki4gp6if1s/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYmFubWVkbyIsImEiOiJhSklqeEZzIn0.rzfSxO3cVUhghA2sJN378A').addTo(app.map);
 
+  app.addLeafletCorners();
+  app.addImageScroller();
   app.addDatePicker();
   app.addSolarZenithPicker();
 }

@@ -4,7 +4,45 @@ html, body{
   margin: 0;
   padding: 0;
 }
+.leaflet-verticalcenter {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding-top: 10px;
+    z-index: 1000;
+}
+.leaflet-verticalcenter .leaflet-control {
+    margin-bottom: 10px;
+}
+.leaflet-horizontalcenter {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    padding-left: 10px;
+    z-index: 1000;
+}
+.leaflet-verticalcenter .leaflet-control {
+    margin-right: 10px;
+}
+.leaflet-imagescroller{
+  padding:5px;
+  text-align:center;
+  box-shadow:0px 1px 1px rgba(0, 0, 0, 0.4);
+  border-radius:5px;
+  border:1px solid #ccc;
+  font-weight:bold;
+  background: no-repeat #FFF;
+}
 #map{
   height:100%;
   width:100%;
+}
+#datepicker{
+  width:90px;
+  padding:5px;
+  text-align:center;
+  box-shadow:0px 1px 1px rgba(0, 0, 0, 0.4);
+  border-radius:5px;
+  border:1px solid #ccc;
+  font-weight:bold;
 }
