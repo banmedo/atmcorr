@@ -3,7 +3,6 @@ Returns the dates of all available images within specified range
 '''
 import json
 
-
 __MISSION__ = 'COPERNICUS/S2'
 
 def getImageIds(credentials, date, west, south, east, north, maxZenith):
@@ -52,11 +51,31 @@ def getCorrectedImage(credentials, id):
     from radiance import radiance_from_TOA
     from interpolated_LUTs import Interpolated_LUTs
 
-    se = SixS_emulator(mission)
+    se = SixS_emulator(__MISSION__)
 
-    iLUTs = Interpolated_LUTs(mission)
+    iLUTs = Interpolated_LUTs(__MISSION__)
 
     iLUTs.interpolate_LUTs()
     se.iLUTs = iLUTs.get()
 
-    return 1
+    Atmcorr_input.geom = img.geometry().centroid()
+    feature = Atmcorr_input.extractor(img).getInfo()
+
+    atSensorRad = radiance_from_TOA(img, feature)
+    seResult = se.run(feature['properties']['atmcorr_inputs'])
+    corrected = ee.Image(atmospheric_correction(atSensorRad, seResult))
+
+    return corrected
+
+def getCorrectedMapId(credentials, id):
+    import ee
+    ee.Initialize(credentials)
+
+    corrected = getCorrectedImage(credentials, id)
+    correctMapId = corrected.getMapId({'bands':'B4,B3,B2','min':0,'max':0.25,'gamma':1.5});
+
+    tempCorrected = {
+        'mapid': correctMapId['mapid'],
+        'token': correctMapId['token']
+    }
+    return tempCorrected

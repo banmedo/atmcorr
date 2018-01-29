@@ -4,8 +4,15 @@ var app = {}
 app.createConstants = function(){
   app.URL = {
     BASE : '/AtmCorr/',
-    GETIMAGES : 'getimagelist'
+    GETIMAGES : 'getimagelist',
+    GETMAPID : 'getmapid'
   }
+}
+
+app.defineVariables = function(){
+  app.map, app.datePicker, app.solarZenithSlider, app.imageIdList;
+  app.__mapURLcache, app.__correctedURLcache = {};
+  app.showCorrected = false;
 }
 
 
@@ -55,7 +62,6 @@ app.createFunctions = function(){
 		}).addTo(app.map);
 
   }
-
   app.addImageScroller = function(){
     var ImageScroller = L.Control.extend({
       onAdd: function(map){
@@ -63,24 +69,79 @@ app.createFunctions = function(){
         var html = "<div class=leaflet-imagescroller>Select a date!</div>";
         template.innerHTML = html.trim();
         return template.content.firstChild;
+      },
+      updateImageList: function(list){
+        this.imgIndex = 0
+        this.imgCount = list.length;
+        if (!this.imgCount){
+          $('.leaflet-imagescroller').html("No images for current Date!");
+        }else{
+          var html = "<button class='leaflet-imagescroller-btn leaflet-imagescroller-prev'> < </button> ";
+          html += "<span class='leaflet-imagescroller-current'> 1 </span> / "+this.imgCount;
+          html += " <button class='leaflet-imagescroller-btn leaflet-imagescroller-next'> > </button>";
+          $('.leaflet-imagescroller').html(html);
+          var curObj = this;
+          $('.leaflet-imagescroller-next').on('click',function(e){
+            if(curObj.imgIndex < (curObj.imgCount-1)){
+              curObj.imgIndex ++;
+              $(".leaflet-imagescroller-current").html(curObj.imgIndex+1);
+              app.updateActiveImage();
+            }
+          });
+          $('.leaflet-imagescroller-prev').on('click',function(e){
+            if(curObj.imgIndex > 0){
+              curObj.imgIndex --;
+              $(".leaflet-imagescroller-current").html(curObj.imgIndex+1);
+              app.updateActiveImage();
+            }
+          });
+        }
       }
     });
-
-    app.ImageScroller =  new ImageScroller({position:'horizontalcenterbottom'}).addTo(app.map);
+    app.imageScroller =  new ImageScroller({position:'horizontalcenterbottom'}).addTo(app.map);
   }
-
-  app.addLayerToMap = function(id){
-    app.setLoading(true);
-    /*$.ajax({
-
-    });*/
+  app.updateActiveImage = function(){
+    app._clearMap();
+    if(app.__mapURLcache[app.imageScroller.imgIndex]){
+      L.tileLayer(app.__mapURLcache[app.imageScroller.imgIndex]).addTo(app.map);
+    }else{
+      app.setLoading(true);
+      var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
+      $.ajax({
+        url:app.URL.GETMAPID,
+        data:data,
+        success: function(response){
+          console.log(response);
+          var tempURL = app._getMapURL(response.mapid, response.token);
+          app.__mapURLcache[app.imageScroller.imgIndex] = tempURL;
+          L.tileLayer(tempURL).addTo(app.map);
+          app.setLoading(false);
+        }
+      });
+    }
+    if(app.showCorrected){
+      if(app.__correctedURLcache[app.imageScroller.imgIndex]){
+        L.tileLayer(app.__correctedURLcache[app.imageScroller.imgIndex]).addTo(app.map);
+      }
+    }
+  }
+  app._getMapURL = function(mapId, token){
+      var baseUrl = 'https://earthengine.googleapis.com/map';
+      var url = [baseUrl, mapId, "{z}", "{x}", "{y}"].join('/');
+      url += '?token=' + token;
+      return url;
+  }
+  app._clearMap = function(){
+    app.map.eachLayer(function(layer){
+      app.map.removeLayer(layer);
+    });
+    L.tileLayer('https://api.mapbox.com/styles/v1/banmedo/ciiibvf1k0011alki4gp6if1s/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYmFubWVkbyIsImEiOiJhSklqeEZzIn0.rzfSxO3cVUhghA2sJN378A').addTo(app.map);
   }
 }
 
 app.initialize = function(){
   app.map = L.map('map').setView([28.115593833316762, 84.64141845703126], 8);
-
-  L.tileLayer('https://api.mapbox.com/styles/v1/banmedo/ciiibvf1k0011alki4gp6if1s/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYmFubWVkbyIsImEiOiJhSklqeEZzIn0.rzfSxO3cVUhghA2sJN378A').addTo(app.map);
+  app._clearMap();
 
   app.addLeafletCorners();
   app.addImageScroller();
@@ -105,10 +166,11 @@ app.addHandlers = function(){
         url:app.URL.GETIMAGES,
         data:params,
         success:function(response){
-          console.log(response);
-          app.origList = response.idList;
-
+          app.__mapURLcache = {};
+          app.imageIdList = response.idlist;
+          app.imageScroller.updateImageList(app.imageIdList);
           app.setLoading(false);
+          app.updateActiveImage(app.imageIdList[0]);
         }
     });
   });

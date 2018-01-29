@@ -25,3 +25,8 @@ def getMapId(request):
     from .atmos.helpers.GetImages import getMapId
     imgid = request.GET.get('id')
     return JsonResponse(getMapId(config.EE_CREDENTIALS,imgid))
+
+def getCorrectedMapId(request):
+    from .atmos.helpers.GetImages import getCorrectedMapId
+    imgid = request.GET.get('id')
+    return JsonResponse(getCorrectedMapId(config.EE_CREDENTIALS,imgid))
