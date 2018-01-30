@@ -30,3 +30,8 @@ def getCorrectedMapId(request):
     from .atmos.helpers.GetImages import getCorrectedMapId
     imgid = request.GET.get('id')
     return JsonResponse(getCorrectedMapId(config.EE_CREDENTIALS,imgid))
+
+def exportImage(request):
+    from .atmos.helpers.GetImages import exportImage
+    imgid = request.GET.get('id')
+    return HttpResponse(exportImage(config.EE_CREDENTIALS,imgid))

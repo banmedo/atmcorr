@@ -79,3 +79,15 @@ def getCorrectedMapId(credentials, id):
         'token': correctMapId['token']
     }
     return tempCorrected
+
+def exportImage(credentials, id):
+    import ee
+    ee.Initialize(credentials)
+
+    image = ee.Image(ee.ImageCollection('COPERNICUS/S2').first())
+    image = image.uint32()
+
+    task = ee.batch.Export.image.toDrive(image=image, description="exported_image",region=image.geometry().bounds().getInfo()['coordinates'])
+
+    task.start()
+    return task.id

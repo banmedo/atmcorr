@@ -5,19 +5,21 @@ app.createConstants = function(){
   app.URL = {
     BASE : '/AtmCorr/',
     GETIMAGES : 'getimagelist',
-    GETMAPID : 'getmapid'
+    GETMAPID : 'getmapid',
+    GETCORRECTEDMAPID : 'getcorrectedmapid',
   }
 }
 
 app.defineVariables = function(){
-  app.map, app.datePicker, app.solarZenithSlider, app.imageIdList;
+  app.map, app.datePicker, app.solarZenithSlider, app.showCorrected, app.origTileLayer, app.correctedTileLayer, app.mapSplit;
+  app.imageIdList = [];
   app.__mapURLcache, app.__correctedURLcache = {};
   app.showCorrected = false;
 }
 
 
 app.createFunctions = function(){
-  app.setLoading = function(state){
+  app.setLoading = function(state, message){
     console.log("loading", state);
   }
   app.addLeafletCorners = function(){
@@ -100,6 +102,18 @@ app.createFunctions = function(){
     });
     app.imageScroller =  new ImageScroller({position:'horizontalcenterbottom'}).addTo(app.map);
   }
+  app.addShowCorrectedToggle = function(){
+    var LeafletCheckBox = L.Control.extend({
+        onAdd: function (map) {
+            var template = document.createElement('template');
+            var html = "<button class='leaflet-showcorrected' > Show Corrected Image!</button>";
+            template.innerHTML = html.trim();
+            return template.content.firstChild;
+        }
+    });
+    app.showCorrected = new LeafletCheckBox({position:'bottomright'}).addTo(app.map);
+    app.showCorrected.state = false;
+  }
   app.updateActiveImage = function(){
     app._clearMap();
     if(app.__mapURLcache[app.imageScroller.imgIndex]){
@@ -114,16 +128,42 @@ app.createFunctions = function(){
           console.log(response);
           var tempURL = app._getMapURL(response.mapid, response.token);
           app.__mapURLcache[app.imageScroller.imgIndex] = tempURL;
-          L.tileLayer(tempURL).addTo(app.map);
+          app.origTileLayer = L.tileLayer(tempURL);
+          app.origTileLayer.addTo(app.map);
           app.setLoading(false);
+          app.showCorrectedImage();
         }
       });
     }
-    if(app.showCorrected){
+  }
+  app.showCorrectedImage = function(){
+    if (app.showCorrected.state){
+      if (app.imageIdList.length < 1) return;
       if(app.__correctedURLcache[app.imageScroller.imgIndex]){
-        L.tileLayer(app.__correctedURLcache[app.imageScroller.imgIndex]).addTo(app.map);
+        app.correctedTileLayer = L.tileLayer(app.__correctedURLcache[app.imageScroller.imgIndex]);
+        app.correctedTileLayer.addTo(app.map);
+        app.mapSplit = L.control.sideBySide(app.origTileLayer, app.correctedTileLayer);
+        app.mapSplit.addTo(app.map);
       }
-    }
+      else{
+        app.setLoading(true);
+        var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
+        $.ajax({
+          url:app.URL.GETCORRECTEDMAPID,
+          data:data,
+          success: function(response){
+            console.log(response);
+            var tempURL = app._getMapURL(response.mapid, response.token);
+            app.__correctedURLcache[app.imageScroller.imgIndex] = tempURL;
+            app.correctedTileLayer = L.tileLayer(tempURL);
+            app.correctedTileLayer.addTo(app.map);
+            app.mapSplit = L.control.sideBySide(app.origTileLayer, app.correctedTileLayer);
+            app.mapSplit.addTo(app.map);
+            app.setLoading(false);
+          }
+        });
+      }
+    }else app._removeSplit();
   }
   app._getMapURL = function(mapId, token){
       var baseUrl = 'https://earthengine.googleapis.com/map';
@@ -137,6 +177,13 @@ app.createFunctions = function(){
     });
     L.tileLayer('https://api.mapbox.com/styles/v1/banmedo/ciiibvf1k0011alki4gp6if1s/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYmFubWVkbyIsImEiOiJhSklqeEZzIn0.rzfSxO3cVUhghA2sJN378A').addTo(app.map);
   }
+  app._removeSplit = function(){
+    if (app.mapSplit){
+      app.map.removeControl(app.mapSplit);
+      app.map.removeLayer(app.correctedTileLayer);
+      delete(app.mapSplit);app.mapSplit;
+    }
+  }
 }
 
 app.initialize = function(){
@@ -147,6 +194,7 @@ app.initialize = function(){
   app.addImageScroller();
   app.addDatePicker();
   app.addSolarZenithPicker();
+  app.addShowCorrectedToggle();
 }
 
 app.addHandlers = function(){
@@ -174,9 +222,20 @@ app.addHandlers = function(){
         }
     });
   });
+
+  $(".leaflet-showCorrected").on('click',function(e){
+    app.showCorrected.state = !app.showCorrected.state;
+    if (app.showCorrected.state){
+      $(".leaflet-showCorrected").css("background","#A3F7B5");
+    }else{
+      $(".leaflet-showCorrected").css("background","#FFFFFF");
+    }
+    app.showCorrectedImage();
+  });
 }
 
 app.createConstants();
+app.defineVariables();
 app.createFunctions();
 app.initialize();
 app.addHandlers();

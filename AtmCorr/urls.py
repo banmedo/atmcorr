@@ -6,5 +6,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('getimagelist/',views.getImageList, name='getimagelist'),
     path('getmapid/',views.getMapId, name='getmapid'),
-    path('getcorrectedmapid/',views.getCorrectedMapId, name='getcorrectedmapid')
+    path('getcorrectedmapid/',views.getCorrectedMapId, name='getcorrectedmapid'),
+    path('exportImage/',views.exportImage, name='exportImage')
 ]
