@@ -7,5 +7,6 @@ urlpatterns = [
     path('getimagelist/',views.getImageList, name='getimagelist'),
     path('getmapid/',views.getMapId, name='getmapid'),
     path('getcorrectedmapid/',views.getCorrectedMapId, name='getcorrectedmapid'),
-    path('exportImage/',views.exportImage, name='exportImage')
+    path('exportImage/',views.exportImage, name='exportImage'),
+    path('auth/',views.auth, name='auth'),
 ]

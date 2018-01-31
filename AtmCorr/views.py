@@ -34,4 +34,23 @@ def getCorrectedMapId(request):
 def exportImage(request):
     from .atmos.helpers.GetImages import exportImage
     imgid = request.GET.get('id')
+
+    from oauth2client.service_account import ServiceAccountCredentials
+    import googleapiclient.discovery
+    import httplib2
+    scope = 'https://www.googleapis.com/auth/drive'
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(config.EE_PRIVATE_KEY_FILE, scope)
+    http = credentials.authorize(httplib2.Http())
+    serv = googleapiclient.discovery.build('drive', 'v2', http=http)
+
     return HttpResponse(exportImage(config.EE_CREDENTIALS,imgid))
+
+def auth(request):
+    from oauth2client.service_account import ServiceAccountCredentials
+    import googleapiclient.discovery
+    import httplib2
+    scope = 'https://www.googleapis.com/auth/drive'
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(config.EE_PRIVATE_KEY_FILE, scope)
+    http = credentials.authorize(httplib2.Http())
+    serv = googleapiclient.discovery.build('drive', 'v2', http=http)
+    return HttpResponse("Done")
