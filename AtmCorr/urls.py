@@ -8,5 +8,5 @@ urlpatterns = [
     path('getmapid/',views.getMapId, name='getmapid'),
     path('getcorrectedmapid/',views.getCorrectedMapId, name='getcorrectedmapid'),
     path('exportImage/',views.exportImage, name='exportImage'),
-    path('auth/',views.auth, name='auth'),
+    path('auth/',views.auth, name='auth')
 ]

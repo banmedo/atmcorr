@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from . import config
 import ee
 
@@ -34,19 +34,48 @@ def getCorrectedMapId(request):
 def exportImage(request):
     from .atmos.helpers.GetImages import exportImage
     imgid = request.GET.get('id')
-
-    from oauth2client.service_account import ServiceAccountCredentials
-    import googleapiclient.discovery
-    import httplib2
-    scope = 'https://www.googleapis.com/auth/drive'
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(config.EE_PRIVATE_KEY_FILE, scope)
-    http = credentials.authorize(httplib2.Http())
-    serv = googleapiclient.discovery.build('drive', 'v2', http=http)
-
-    return HttpResponse(exportImage(config.EE_CREDENTIALS,imgid))
+    return JsonResponse(exportImage(config.EE_CREDENTIALS,imgid))
 
 def auth(request):
-    from pydrive.auth import GoogleAuth
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()
-    return HttpResponse("Done")
+    #from oauth2client.service_account import ServiceAccountCredentials
+    #import googleapiclient.discovery
+    #import httplib2
+
+    from pydrive.auth import GoogleAuth, ServiceAccountCredentials
+    from pydrive.drive import GoogleDrive
+
+    #scope = 'https://www.googleapis.com/auth/drive'
+    #credentials = ServiceAccountCredentials.from_json_keyfile_name(config.EE_PRIVATE_KEY_FILE, scope)
+    #http = credentials.authorize(httplib2.Http())
+    #serv = googleapiclient.discovery.build('drive', 'v2', http=http)
+
+    userAuth = GoogleAuth()
+    userAuth.LocalWebserverAuth()
+    userDrive = GoogleDrive(userAuth)
+
+    serviceAuth = GoogleAuth()
+    scope = ['https://www.googleapis.com/auth/drive']
+    serviceAuth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        config.EE_PRIVATE_KEY_FILE,
+        scope)
+    serviceDrive = GoogleDrive(serviceAuth)
+
+    prefix = "1517464801UNOPJ"
+    #prefix = "exported_image"
+    prefix_with_escaped_quotes = prefix.replace('"', '\\"')
+    query = 'title contains "%s"' % prefix_with_escaped_quotes
+    fileList = serviceDrive.ListFile({'q':query}).GetList()
+    reqFile = fileList[0]
+    newPermit = reqFile.InsertPermission({
+        'type':'anyone',
+        'value':'anyone',
+        'role':'reader'})
+        
+    fid = reqFile.get('id')
+    #files = serv.files().list(q=query).execute()
+    #filelist = files.get('items')
+    #for f in filelist:
+    #    fileid = f['id']
+    #    serv.files().delete(fileId=fileid).execute()
+
+    return HttpResponse(fileList)

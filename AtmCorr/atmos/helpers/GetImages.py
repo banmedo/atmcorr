@@ -2,6 +2,9 @@
 Returns the dates of all available images within specified range
 '''
 import json
+import time
+import random
+import string
 
 __MISSION__ = 'COPERNICUS/S2'
 
@@ -87,7 +90,17 @@ def exportImage(credentials, id):
     image = ee.Image(ee.ImageCollection('COPERNICUS/S2').first())
     image = image.uint32()
 
-    task = ee.batch.Export.image.toDrive(image=image, description="exported_image",region=image.geometry().bounds().getInfo()['coordinates'])
+    rnd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+    date = str(int(time.time()))
+    filePrefix = date+rnd
+
+    task = ee.batch.Export.image(
+        image=image,
+        description="exported_image",
+        #region=image.geometry().bounds().getInfo()['coordinates'],
+        config={
+            'driveFileNamePrefix': filePrefix
+        })
 
     task.start()
-    return task.id
+    return  {"taskid":task.id,"fileprefix":filePrefix}
