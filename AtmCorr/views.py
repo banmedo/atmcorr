@@ -1,7 +1,21 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from pydrive.auth import GoogleAuth, ServiceAccountCredentials
+from pydrive.drive import GoogleDrive
 from . import config
 import ee
+
+def getUserAuth():
+    userAuth = GoogleAuth(settings_file='settings.yaml')
+    userAuth.LoadCredentialsFile("credentials.txt")
+    if userAuth.credentials is None:
+        #userAuth.LocalWebserverAuth()
+        return {"loggedin":False,"auth":userAuth}
+    elif userAuth.access_token_expired:
+        userAuth.Refresh()
+    else:
+        userAuth.Authorize()
+    return {"loggedin":True,"auth":userAuth}
 
 # Create your views here.
 def index(request):
@@ -9,6 +23,10 @@ def index(request):
     context = {
         'key':'value'
     }
+    logState = getUserAuth()
+    if not logState["loggedin"]:
+        userAuth = logState["auth"]
+        return HttpResponseRedirect(userAuth.GetAuthUrl())
     return render(request, 'AtmCorr/index.html', context)
 
 def getImageList(request):
@@ -37,20 +55,7 @@ def exportImage(request):
     return JsonResponse(exportImage(config.EE_CREDENTIALS,imgid))
 
 def auth(request):
-    #from oauth2client.service_account import ServiceAccountCredentials
-    #import googleapiclient.discovery
-    #import httplib2
 
-    from pydrive.auth import GoogleAuth, ServiceAccountCredentials
-    from pydrive.drive import GoogleDrive
-
-    #scope = 'https://www.googleapis.com/auth/drive'
-    #credentials = ServiceAccountCredentials.from_json_keyfile_name(config.EE_PRIVATE_KEY_FILE, scope)
-    #http = credentials.authorize(httplib2.Http())
-    #serv = googleapiclient.discovery.build('drive', 'v2', http=http)
-
-    userAuth = GoogleAuth()
-    userAuth.LocalWebserverAuth()
     userDrive = GoogleDrive(userAuth)
 
     serviceAuth = GoogleAuth()
@@ -70,12 +75,16 @@ def auth(request):
         'type':'anyone',
         'value':'anyone',
         'role':'reader'})
-        
-    fid = reqFile.get('id')
-    #files = serv.files().list(q=query).execute()
-    #filelist = files.get('items')
-    #for f in filelist:
-    #    fileid = f['id']
-    #    serv.files().delete(fileId=fileid).execute()
 
-    return HttpResponse(fileList)
+    fid = reqFile.get('id')
+
+    #newFile = userDrive.auth.service.files().copy(fileId=fid,body={'title':prefix}).execute()
+
+    return HttpResponse(fid)#newFile['alternateLink'])
+
+def oauth2callback(request):
+    code = request.GET.get('code')
+    userAuth = GoogleAuth()
+    userAuth.Auth(code)
+    userAuth.SaveCredentialsFile("credentials.txt")
+    return HttpResponseRedirect("/AtmCorr")
