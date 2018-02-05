@@ -7,6 +7,7 @@ app.createConstants = function(){
     GETIMAGES : 'getimagelist',
     GETMAPID : 'getmapid',
     GETCORRECTEDMAPID : 'getcorrectedmapid',
+    EXPORT : 'exportimage'
   }
 }
 
@@ -103,7 +104,7 @@ app.createFunctions = function(){
     app.imageScroller =  new ImageScroller({position:'horizontalcenterbottom'}).addTo(app.map);
   }
   app.addShowCorrectedToggle = function(){
-    var LeafletCheckBox = L.Control.extend({
+    var LeafletShowCorrected = L.Control.extend({
         onAdd: function (map) {
             var template = document.createElement('template');
             var html = "<button class='leaflet-showcorrected' > Show Corrected Image!</button>";
@@ -111,8 +112,19 @@ app.createFunctions = function(){
             return template.content.firstChild;
         }
     });
-    app.showCorrected = new LeafletCheckBox({position:'bottomright'}).addTo(app.map);
+    app.showCorrected = new LeafletShowCorrected({position:'bottomright'}).addTo(app.map);
     app.showCorrected.state = false;
+  }
+  app.addExportButton = function(){
+    var LeafletExport = L.Control.extend({
+        onAdd: function (map) {
+            var template = document.createElement('template');
+            var html = "<button class='leaflet-exportimage' disabled> <img src='https://png.icons8.com/metro/50/000000/download.png'> </button>";
+            template.innerHTML = html.trim();
+            return template.content.firstChild;
+        }
+    });
+    new LeafletExport({position:'topleft'}).addTo(app.map);
   }
   app.updateActiveImage = function(){
     app._clearMap();
@@ -195,6 +207,7 @@ app.initialize = function(){
   app.addDatePicker();
   app.addSolarZenithPicker();
   app.addShowCorrectedToggle();
+  app.addExportButton()
 }
 
 app.addHandlers = function(){
@@ -224,6 +237,7 @@ app.addHandlers = function(){
   });
 
   $(".leaflet-showCorrected").on('click',function(e){
+    $(".leaflet-exportimage").prop("disabled",app.showCorrected.state)
     app.showCorrected.state = !app.showCorrected.state;
     if (app.showCorrected.state){
       $(".leaflet-showCorrected").css("background","#A3F7B5");
@@ -232,6 +246,11 @@ app.addHandlers = function(){
     }
     app.showCorrectedImage();
   });
+
+  $(".leaflet-exportimage").on('click',function(e){
+    console.log('exportimage');
+  });
+
 }
 
 app.createConstants();

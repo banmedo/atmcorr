@@ -54,11 +54,27 @@ html, body{
   font-weight:bold;
   background: #FFF;
 }
-.leaflet-showCorrected:hover{
+.leaflet-exportimage{
+  padding:5px;
+  text-align:center;
+  box-shadow:0px 1px 1px rgba(0, 0, 0, 0.4);
+  border-radius:5px;
+  border:1px solid #ccc;
+  font-weight:bold;
+  background: #FFF;
+}
+.leaflet-exportimage img{
+  height:20px;
+  width:20px;
+}
+.leaflet-showCorrected:hover, .leaflet-exportimage:hover{
   background: #B5E2FA !important;
 }
-.leaflet-showCorrected:active{
+.leaflet-showCorrected:active, .leaflet-exportimage:active{
   background: #0FA3B1 !important;
+}
+.leaflet-exportimage:disabled{
+  background: #BED8D4 !important;
 }
 #map{
   height:100%;

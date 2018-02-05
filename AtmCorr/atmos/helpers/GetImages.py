@@ -90,11 +90,10 @@ def exportImage(credentials, id):
     image = ee.Image(ee.ImageCollection('COPERNICUS/S2').first())
     image = image.uint32()
 
-    rnd = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
     date = str(int(time.time()))
-    filePrefix = date+rnd
+    filePrefix = id+date
 
-    task = ee.batch.Export.image(
+    task = ee.batch.Export.image(zx
         image=image,
         description="exported_image",
         #region=image.geometry().bounds().getInfo()['coordinates'],
@@ -104,3 +103,11 @@ def exportImage(credentials, id):
 
     task.start()
     return  {"taskid":task.id,"fileprefix":filePrefix}
+
+def resumeWhenTaskComplete(taskid):
+    import ee
+    ee.Initialize(credentials)
+    task = ee.batch.Task(taskid)
+    while task.active():
+        time.sleep(2)
+    return (True)

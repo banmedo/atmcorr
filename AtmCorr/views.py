@@ -7,15 +7,15 @@ import ee
 
 def getUserAuth():
     userAuth = GoogleAuth(settings_file='settings.yaml')
-    userAuth.LoadCredentialsFile("credentials.txt")
+    userAuth.LoadCredentialsFile('credentials.txt')
     if userAuth.credentials is None:
         #userAuth.LocalWebserverAuth()
-        return {"loggedin":False,"auth":userAuth}
+        return {'loggedin':False,'auth':userAuth}
     elif userAuth.access_token_expired:
         userAuth.Refresh()
     else:
         userAuth.Authorize()
-    return {"loggedin":True,"auth":userAuth}
+    return {'loggedin':True,'auth':userAuth}
 
 # Create your views here.
 def index(request):
@@ -24,8 +24,8 @@ def index(request):
         'key':'value'
     }
     logState = getUserAuth()
-    if not logState["loggedin"]:
-        userAuth = logState["auth"]
+    if not logState['loggedin']:
+        userAuth = logState['auth']
         return HttpResponseRedirect(userAuth.GetAuthUrl())
     return render(request, 'AtmCorr/index.html', context)
 
@@ -50,41 +50,54 @@ def getCorrectedMapId(request):
     return JsonResponse(getCorrectedMapId(config.EE_CREDENTIALS,imgid))
 
 def exportImage(request):
-    from .atmos.helpers.GetImages import exportImage
+    from .atmos.helpers.GetImages import exportImage, resumeWhenTaskComplete
+    #get image id from request
     imgid = request.GET.get('id')
-    return JsonResponse(exportImage(config.EE_CREDENTIALS,imgid))
+    #get user authentication
+    logState = getUserAuth()
+    #retun auth url to be handled in js if user has not authenticated app
+    if not logState['loggedin']:
+        userAuth = logState['auth']
+        return JsonResponse({'success':False,'authurl':userAuth.GetAuthUrl()})
+    #perform export task if user authenticated
+    else:
+        #export correct image to service account drive and get taskid
+        task = exportImage(config.EE_CREDENTIALS,imgid)
+        taskid = task['taskid']
+        prefix = task['fileprefix']
+        #wait till task comp;ete
+        taskDone =resumeWhenTaskComplete(taskid)
+        #authenticate pydrive with user and service drives
+        userAuth = logState['auth']
+        userDrive = GoogleDrive(userAuth)
 
-def auth(request):
-
-    userDrive = GoogleDrive(userAuth)
-
-    serviceAuth = GoogleAuth()
-    scope = ['https://www.googleapis.com/auth/drive']
-    serviceAuth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        serviceAuth = GoogleAuth()
+        scope = ['https://www.googleapis.com/auth/drive']
+        serviceAuth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
         config.EE_PRIVATE_KEY_FILE,
         scope)
-    serviceDrive = GoogleDrive(serviceAuth)
+        serviceDrive = GoogleDrive(serviceAuth)
 
-    prefix = "1517464801UNOPJ"
-    #prefix = "exported_image"
-    prefix_with_escaped_quotes = prefix.replace('"', '\\"')
-    query = 'title contains "%s"' % prefix_with_escaped_quotes
-    fileList = serviceDrive.ListFile({'q':query}).GetList()
-    reqFile = fileList[0]
-    newPermit = reqFile.InsertPermission({
+        #find file in service account drive
+        prefix_with_escaped_quotes = prefix.replace('"', '\\"')
+        query = 'title contains "%s"' % prefix_with_escaped_quotes
+        fileList = serviceDrive.ListFile({'q':query}).GetList()
+        reqFile = fileList[0]
+        #make the file public
+        newPermit = reqFile.InsertPermission({
         'type':'anyone',
         'value':'anyone',
         'role':'reader'})
-
-    fid = reqFile.get('id')
-
-    #newFile = userDrive.auth.service.files().copy(fileId=fid,body={'title':prefix}).execute()
-
-    return HttpResponse(fid)#newFile['alternateLink'])
+        #get file id to copy
+        fid = reqFile.get('id')
+        #copy the file to user's google drive
+        newFile = userDrive.auth.service.files().copy(fileId=fid,body={'title':prefix}).execute()
+        #return success state and file download url
+        return JsonResponse({'success':True,'fileURL':newFile['alternateLink']})
 
 def oauth2callback(request):
     code = request.GET.get('code')
     userAuth = GoogleAuth()
     userAuth.Auth(code)
-    userAuth.SaveCredentialsFile("credentials.txt")
-    return HttpResponseRedirect("/AtmCorr")
+    userAuth.SaveCredentialsFile('credentials.txt')
+    return HttpResponseRedirect('/AtmCorr')
