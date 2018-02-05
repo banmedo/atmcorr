@@ -248,7 +248,17 @@ app.addHandlers = function(){
   });
 
   $(".leaflet-exportimage").on('click',function(e){
-    console.log('exportimage');
+    console.log("No image selected!")
+    if (app.imageIdList.length < 1) return;
+    app.setLoading(true);
+    var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
+    $.ajax({
+      url:app.URL.EXPORT,
+      data:data,
+      success:function(response){
+        console.log(response);
+      }
+    });
   });
 
 }

@@ -66,7 +66,7 @@ def exportImage(request):
         taskid = task['taskid']
         prefix = task['fileprefix']
         #wait till task comp;ete
-        taskDone =resumeWhenTaskComplete(taskid)
+        taskDone =resumeWhenTaskComplete(config.EE_CREDENTIALS, taskid)
         #authenticate pydrive with user and service drives
         userAuth = logState['auth']
         userDrive = GoogleDrive(userAuth)
@@ -101,3 +101,13 @@ def oauth2callback(request):
     userAuth.Auth(code)
     userAuth.SaveCredentialsFile('credentials.txt')
     return HttpResponseRedirect('/AtmCorr')
+
+def clearServiceDrive(request):
+    serviceAuth = GoogleAuth()
+    scope = ['https://www.googleapis.com/auth/drive']
+    serviceAuth.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+    config.EE_PRIVATE_KEY_FILE,
+    scope)
+    serviceDrive = GoogleDrive(serviceAuth)
+
+    return HttpResponse("TODO")

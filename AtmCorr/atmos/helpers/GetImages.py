@@ -93,7 +93,7 @@ def exportImage(credentials, id):
     date = str(int(time.time()))
     filePrefix = id+date
 
-    task = ee.batch.Export.image(zx
+    task = ee.batch.Export.image(
         image=image,
         description="exported_image",
         #region=image.geometry().bounds().getInfo()['coordinates'],
@@ -104,7 +104,7 @@ def exportImage(credentials, id):
     task.start()
     return  {"taskid":task.id,"fileprefix":filePrefix}
 
-def resumeWhenTaskComplete(taskid):
+def resumeWhenTaskComplete(credentials, taskid):
     import ee
     ee.Initialize(credentials)
     task = ee.batch.Task(taskid)
