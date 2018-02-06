@@ -172,6 +172,10 @@ app.createFunctions = function(){
             app.mapSplit = L.control.sideBySide(app.origTileLayer, app.correctedTileLayer);
             app.mapSplit.addTo(app.map);
             app.setLoading(false);
+          },
+          error: function(request, status, error){
+            console.log(request, status, error);
+            $(".leaflet-showCorrected").click();
           }
         });
       }
@@ -223,6 +227,7 @@ app.addHandlers = function(){
       maxZenith: app.solarZenithSlider.slider.value
     }
     app.setLoading(true);
+    app._removeSplit();
     $.ajax({
         url:app.URL.GETIMAGES,
         data:params,
@@ -248,8 +253,10 @@ app.addHandlers = function(){
   });
 
   $(".leaflet-exportimage").on('click',function(e){
-    console.log("No image selected!")
-    if (app.imageIdList.length < 1) return;
+    if (app.imageIdList.length < 1) {
+      console.log('No Image Selected');
+      return;
+    }
     app.setLoading(true);
     var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
     $.ajax({

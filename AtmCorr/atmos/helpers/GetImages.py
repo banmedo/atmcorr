@@ -96,7 +96,6 @@ def exportImage(credentials, id):
     task = ee.batch.Export.image(
         image=image,
         description="exported_image",
-        #region=image.geometry().bounds().getInfo()['coordinates'],
         config={
             'driveFileNamePrefix': filePrefix
         })
