@@ -8,6 +8,13 @@ app.createConstants = function(){
     GETMAPID : 'getmapid',
     GETCORRECTEDMAPID : 'getcorrectedmapid',
     EXPORT : 'exportimage'
+  };
+  app.MSG = {
+    GETIMAGES : 'Getting images',
+    GETCORRECTED : 'Getting corrected image',
+    VISMAP : 'Visualizing current image',
+    EXPORT : 'Exporting corrected image to your drive! This could take several minutes!',
+    NOIMG : 'There are no images for the selected date!'
   }
 }
 
@@ -21,7 +28,17 @@ app.defineVariables = function(){
 
 app.createFunctions = function(){
   app.setLoading = function(state, message){
-    console.log("loading", state);
+    $('#loadingContent').html(message);
+    if (state) {
+      $('#loadingBox').modal('show');
+    } else {
+      $('#loadingBox').modal('hide');
+    }
+  }
+  app.showMessage = function(header,message){
+    $('#messageBox').modal('show');
+    $('#messageHeader').html(header);
+    $('#messageContent').html(message);
   }
   app.addLeafletCorners = function(){
     var corners = app.map._controlCorners,
@@ -131,7 +148,7 @@ app.createFunctions = function(){
     if(app.__mapURLcache[app.imageScroller.imgIndex]){
       L.tileLayer(app.__mapURLcache[app.imageScroller.imgIndex]).addTo(app.map);
     }else{
-      app.setLoading(true);
+      app.setLoading(true, app.MSG.VISMAP);
       var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
       $.ajax({
         url:app.URL.GETMAPID,
@@ -158,7 +175,7 @@ app.createFunctions = function(){
         app.mapSplit.addTo(app.map);
       }
       else{
-        app.setLoading(true);
+        app.setLoading(true, app.MSG.GETCORRECTED);
         var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
         $.ajax({
           url:app.URL.GETCORRECTEDMAPID,
@@ -226,7 +243,7 @@ app.addHandlers = function(){
       north: bounds.getNorth(),
       maxZenith: app.solarZenithSlider.slider.value
     }
-    app.setLoading(true);
+    app.setLoading(true, app.MSG.GETIMAGES);
     app._removeSplit();
     $.ajax({
         url:app.URL.GETIMAGES,
@@ -236,7 +253,8 @@ app.addHandlers = function(){
           app.imageIdList = response.idlist;
           app.imageScroller.updateImageList(app.imageIdList);
           app.setLoading(false);
-          app.updateActiveImage(app.imageIdList[0]);
+          if(app.imageIdList.length<1) app.showMessage("No Images","No images available for the date "+date);
+          else app.updateActiveImage(app.imageIdList[0]);
         }
     });
   });
@@ -254,16 +272,18 @@ app.addHandlers = function(){
 
   $(".leaflet-exportimage").on('click',function(e){
     if (app.imageIdList.length < 1) {
-      console.log('No Image Selected');
+      app.showMessage('No Image Selected');
       return;
     }
-    app.setLoading(true);
+    app.setLoading(true, app.MSG.EXPORT);
     var data = {id: app.imageIdList[app.imageScroller.imgIndex]};
     $.ajax({
       url:app.URL.EXPORT,
       data:data,
       success:function(response){
-        console.log(response);
+        if (response.success){
+          app.setLoading(false);
+        }
       }
     });
   });

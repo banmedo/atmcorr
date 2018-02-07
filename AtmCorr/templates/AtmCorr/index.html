@@ -18,6 +18,35 @@
 </head>
 <body>
   <div id="map"></div>
+  <!-- The Modal -->
+  <div class="modal fade" id="loadingBox" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Loading...</h4>
+        </div>
+        <div class="modal-body" id="loadingContent">
+          Loading...
+        </div>
+        <div class="modal-footer">
+          Please wait till the task is complete!
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="messageBox">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="messageHeader">Message</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body" id="messageContent">
+          Message
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="{% static 'AtmCorr\leaflet-slider.js' %}"></script>
   <script src="{% static 'AtmCorr\leaflet-side-by-side.min.js' %}"></script>
   <script src="{% static 'AtmCorr\main.js' %}"></script>

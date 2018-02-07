@@ -5,11 +5,11 @@ import json
 import time
 import random
 import string
+import ee
 
 __MISSION__ = 'COPERNICUS/S2'
 
 def getImageIds(credentials, date, west, south, east, north, maxZenith):
-    import ee
     ee.Initialize(credentials)
     geom = ee.Geometry.Rectangle(float(west), float(south), float(east), float(north))
     start = ee.Date(date)
@@ -27,7 +27,6 @@ def getImageIds(credentials, date, west, south, east, north, maxZenith):
     return {'idlist':idList.getInfo()}
 
 def getMapId(credentials, id):
-    import ee
     ee.Initialize(credentials)
     img = ee.Image(__MISSION__+'/'+id)
     img = img.divide(10000)
@@ -39,7 +38,6 @@ def getMapId(credentials, id):
     return temp
 
 def getCorrectedImage(credentials, id):
-    import ee
     ee.Initialize(credentials)
     img = ee.Image(__MISSION__+'/'+id)
 
@@ -71,7 +69,6 @@ def getCorrectedImage(credentials, id):
     return corrected
 
 def getCorrectedMapId(credentials, id):
-    import ee
     ee.Initialize(credentials)
 
     corrected = getCorrectedImage(credentials, id)
@@ -84,27 +81,29 @@ def getCorrectedMapId(credentials, id):
     return tempCorrected
 
 def exportImage(credentials, id):
-    import ee
     ee.Initialize(credentials)
 
-    image = ee.Image(ee.ImageCollection('COPERNICUS/S2').first())
-    image = image.uint32()
+    #image = ee.Image(ee.ImageCollection('COPERNICUS/S2').first())
+    image = getCorrectedImage(credentials, id)
+    #image = image.uint16()
 
     date = str(int(time.time()))
     filePrefix = id+date
 
-    task = ee.batch.Export.image(
+    '''task = ee.batch.Export.image(
         image=image,
         description="exported_image",
+        #region=image.geometry().bounds().getInfo()['coordinates'],
         config={
+            'region': image.geometry().bounds().getInfo()['coordinates'],
             'driveFileNamePrefix': filePrefix
-        })
+        })'''
+    task = ee.batch.Export.image.toDrive(image,fileNamePrefix = filePrefix)
 
     task.start()
     return  {"taskid":task.id,"fileprefix":filePrefix}
 
 def resumeWhenTaskComplete(credentials, taskid):
-    import ee
     ee.Initialize(credentials)
     task = ee.batch.Task(taskid)
     while task.active():

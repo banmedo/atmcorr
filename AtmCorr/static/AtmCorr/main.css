@@ -77,7 +77,7 @@ html, body{
   background: #BED8D4 !important;
 }
 .ui-datepicker{
-  z-index:9999 !important;
+  z-index:1000 !important;
 }
 #map{
   height:100%;
